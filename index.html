@@ -1,0 +1,915 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gráficas de Distribuciones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<style>
+  :root {
+    --navy: #1F3864; --ink: #1B2433; --muted: #5A6578; --paper: #F4F6FA; --surface: #FFFFFF;
+    --line: #C9D3E3; --zebra: #EEF2F8; --total: #D6DEEB; --head-text: #FFFFFF; --focus: #3B6FD6;
+    --warn-bg: #FFF4E0; --warn-ink: #7A4B00;
+    --sans: "Source Sans 3", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --navy: #8FB0E8; --ink: #E4E9F2; --muted: #A3AEC2; --paper: #121722; --surface: #1A2130;
+      --line: #33405A; --zebra: #1F2839; --total: #2A3650; --head-text: #0F1420; --focus: #8FB0E8;
+      --warn-bg: #3A2C12; --warn-ink: #F3D39A;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --navy: #8FB0E8; --ink: #E4E9F2; --muted: #A3AEC2; --paper: #121722; --surface: #1A2130;
+    --line: #33405A; --zebra: #1F2839; --total: #2A3650; --head-text: #0F1420; --focus: #8FB0E8;
+    --warn-bg: #3A2C12; --warn-ink: #F3D39A;
+  }
+
+  [hidden] { display: none !important; }
+  body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.5; margin: 0; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 22px; }
+  header h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(1.6rem, 4vw, 2.3rem); line-height: 1.15; color: var(--navy); margin: 0 0 6px; text-wrap: balance; }
+  header p { margin: 0; color: var(--muted); max-width: 66ch; }
+
+  .layout { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  .panel, .sheet { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+  .label-sec { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 6px 0 0; font-weight: 700; }
+  .label-sec:first-child { margin-top: 0; }
+  .field { display: grid; gap: 6px; }
+  label, .flabel { font-weight: 600; font-size: 0.95rem; }
+  .hint { font-size: 0.85rem; color: var(--muted); margin: 0; }
+  input[type="text"], input[type="number"], textarea, select {
+    font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line);
+    border-radius: 6px; padding: 9px 10px; width: 100%; box-sizing: border-box;
+  }
+  textarea { min-height: 96px; resize: vertical; font-variant-numeric: tabular-nums; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible,
+  .file-btn:focus-within, .chips label:focus-within, .check:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.85rem; }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .file-btn { position: relative; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--navy); color: var(--navy); border-radius: 6px; padding: 12px; font-weight: 600; cursor: pointer; text-align: center; }
+  .file-btn input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .ejemplos { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ejemplos button { font-size: 0.85rem; padding: 6px 10px; font-weight: 600; background: transparent; color: var(--navy); }
+
+  .chips { display: grid; gap: 8px; }
+  .chips.c2 { grid-template-columns: 1fr 1fr; }
+  .chips.c3 { grid-template-columns: repeat(3, 1fr); }
+  .chips label {
+    position: relative; display: flex; align-items: center; justify-content: center; text-align: center;
+    border: 1px solid var(--line); border-radius: 6px; padding: 9px 6px; cursor: pointer;
+    font-size: 0.9rem; line-height: 1.2; background: var(--paper); min-height: 44px; box-sizing: border-box;
+  }
+  .chips input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .chips label:has(input:checked) { border-color: var(--navy); background: var(--navy); color: var(--head-text); }
+  .chips label:has(input:disabled) { opacity: 0.4; cursor: not-allowed; }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .check { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; font-size: 0.93rem; cursor: pointer; }
+  .check input { width: 20px; height: 20px; margin: 1px 0 0; flex: none; accent-color: var(--navy); }
+
+  button { font: inherit; font-weight: 700; border-radius: 6px; padding: 11px 16px; cursor: pointer; border: 1px solid var(--navy); }
+  .primary { background: var(--navy); color: var(--head-text); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .msg { border-radius: 6px; padding: 10px 12px; font-size: 0.92rem; margin: 0; background: var(--warn-bg); color: var(--warn-ink); }
+
+  .result { display: grid; gap: 18px; min-width: 0; }
+  .lienzo { position: relative; }
+  .lienzo canvas { display: block; width: 100%; border: 1px solid var(--line); border-radius: 6px; background: #fff; touch-action: pan-y; }
+  .tip {
+    position: absolute; pointer-events: none; background: #1B2433; color: #fff; font-size: 0.85rem; line-height: 1.35;
+    padding: 6px 9px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); z-index: 2;
+    font-variant-numeric: tabular-nums; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  }
+  .tip[hidden] { display: none; }
+  .resumen { margin: 0; color: var(--muted); font-size: 0.92rem; text-align: center; font-variant-numeric: tabular-nums; }
+
+  .sheet h3 { font-family: var(--serif); font-weight: 600; font-size: 1.2rem; color: var(--navy); text-align: center; margin: 0; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { border: 1px solid var(--line); padding: 6px 8px; text-align: center; white-space: nowrap; }
+  thead th { background: var(--navy); color: var(--head-text); font-weight: 700; }
+  tbody tr:nth-child(even) td { background: var(--zebra); }
+  tbody tr.total td { background: var(--total); font-weight: 700; }
+  .sym { font-family: var(--serif); font-style: italic; font-weight: 400; }
+  .sym sub { font-size: 0.7em; }
+  details { border-top: 1px solid var(--line); padding-top: 10px; }
+  summary { cursor: pointer; font-weight: 600; color: var(--navy); }
+  .pasos { margin: 8px 0 0; padding-left: 1.2em; display: grid; gap: 6px; font-variant-numeric: tabular-nums; }
+  .preview img { border: 1px solid var(--line); border-radius: 6px; background: #fff; width: 100%; height: auto; }
+
+  @media (max-width: 560px) {
+    .panel, .sheet { padding: 14px 10px; }
+    table { font-size: 0.78rem; }
+    th, td { padding: 5px 3px; }
+    .chips label { font-size: 0.84rem; padding: 8px 4px; }
+  }
+  @media (prefers-reduced-motion: no-preference) { button { transition: filter .15s; } button:hover { filter: brightness(1.1); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Gráficas de distribuciones de frecuencias</h1>
+    <p>Sube un archivo CSV o escribe tus datos, elige si los quieres agrupados o no y el tipo de gráfica. Puedes decidir qué frecuencia mostrar en cada eje y descargar la gráfica en JPG.</p>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-label="Opciones">
+      <h2 class="label-sec">1. Datos de la muestra</h2>
+      <div class="field">
+        <label class="file-btn" for="archivo">Subir archivo CSV
+          <input type="file" id="archivo" accept=".csv,text/csv,text/plain">
+        </label>
+        <p class="hint" id="nombreArchivo">La celda A1 es el nombre de la variable y los datos van debajo, uno por celda.</p>
+      </div>
+      <div class="or">o escríbelos aquí</div>
+      <div class="field">
+        <label for="variable">Nombre de la variable</label>
+        <input type="text" id="variable">
+      </div>
+      <div class="field">
+        <label for="datos">Datos</label>
+        <textarea id="datos" spellcheck="false"></textarea>
+        <p class="hint">Sepáralos con comas o saltos de línea. Usa punto decimal (1.65).</p>
+        <div class="ejemplos">
+          <button type="button" id="ej1">Ejemplo: número de hermanos</button>
+          <button type="button" id="ej2">Ejemplo: estaturas</button>
+          <button type="button" id="ej3">Ejemplo: transporte</button>
+        </div>
+      </div>
+
+      <h2 class="label-sec">2. Tipo de distribución</h2>
+      <div class="chips c2" role="radiogroup" aria-label="Tipo de distribución">
+        <label><input type="radio" name="dist" value="na" checked> Datos no agrupados</label>
+        <label><input type="radio" name="dist" value="ag"> Datos agrupados</label>
+      </div>
+      <div id="opcAgrupados" hidden>
+        <div class="chips c2" role="radiogroup" aria-label="Forma de calcular las clases">
+          <label><input type="radio" name="modo" value="sturges" checked> Regla de Sturges</label>
+          <label><input type="radio" name="modo" value="propio"> Elegir <i>&nbsp;k&nbsp;</i> y <i>&nbsp;A</i></label>
+        </div>
+        <div class="duo" id="camposPropios" hidden style="margin-top:10px">
+          <div class="field">
+            <label for="kPropio">Número de clases <span class="sym">k</span></label>
+            <input type="number" id="kPropio" min="1" max="50" step="1" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="aPropio">Amplitud <span class="sym">A</span></label>
+            <input type="text" id="aPropio" inputmode="decimal">
+          </div>
+        </div>
+      </div>
+
+      <h2 class="label-sec">3. Tipo de gráfica</h2>
+      <div class="chips c3" role="radiogroup" aria-label="Tipo de gráfica" id="tipos">
+        <label><input type="radio" name="tipo" value="puntos"> Puntos</label>
+        <label><input type="radio" name="tipo" value="circular"> Circular</label>
+        <label><input type="radio" name="tipo" value="barras" checked> <span id="nomBarras">Barras</span></label>
+        <label><input type="radio" name="tipo" value="poligono"> Polígono</label>
+        <label><input type="radio" name="tipo" value="combinada"> <span id="nomCombinada">Barras + polígono</span></label>
+        <label><input type="radio" name="tipo" value="ojiva"> Ojiva</label>
+      </div>
+      <p class="hint" id="avisoCualitativa" hidden>La variable es cualitativa (no son números): el polígono y la ojiva no aplican porque los valores no tienen un orden numérico.</p>
+
+      <div id="opcEjes">
+        <h2 class="label-sec">4. Ejes verticales</h2>
+        <div class="duo">
+          <div class="field">
+            <label for="ejeIzq">Eje izquierdo</label>
+            <select id="ejeIzq">
+              <option value="abs" selected>Absoluta (f)</option>
+              <option value="rel">Relativa (fr %)</option>
+              <option value="no">Sin eje</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="ejeDer">Eje derecho</label>
+            <select id="ejeDer">
+              <option value="abs">Absoluta (f)</option>
+              <option value="rel">Relativa (fr %)</option>
+              <option value="no" selected>Sin eje</option>
+            </select>
+          </div>
+        </div>
+        <p class="hint" id="hintEjes">En la ojiva los ejes muestran las frecuencias acumuladas (<i>F<sub>i</sub></i> y <i>Fr<sub>i</sub></i> %).</p>
+      </div>
+
+      <h2 class="label-sec">5. Detalles</h2>
+      <label class="check" id="filaCerrar"><input type="checkbox" id="cerrar"> <span>Cerrar el polígono en el eje horizontal (frecuencia 0 antes del primer valor y después del último)</span></label>
+      <label class="check"><input type="checkbox" id="valores" checked> <span>Mostrar los valores sobre la gráfica</span></label>
+      <div class="field">
+        <label for="titulo">Título de la gráfica</label>
+        <input type="text" id="titulo" placeholder="Se genera solo si lo dejas vacío">
+      </div>
+      <div class="field">
+        <label for="ejeX">Nombre del eje horizontal</label>
+        <input type="text" id="ejeX" placeholder="Por defecto, el nombre de la variable">
+      </div>
+      <div class="actions"><button type="button" class="primary" id="graficar">Graficar</button></div>
+      <p class="msg" id="mensaje" hidden></p>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <div class="sheet">
+        <div class="lienzo" id="lienzo">
+          <canvas id="cv" role="img" aria-label="Gráfica"></canvas>
+          <div class="tip" id="tip" hidden></div>
+        </div>
+        <p class="resumen" id="resumen"></p>
+        <div class="actions"><button type="button" class="primary" id="descargar">Descargar JPG</button></div>
+      </div>
+
+      <div class="sheet">
+        <h3 id="tituloTabla">Tabla de distribución de frecuencias</h3>
+        <div class="scroll"><table><thead id="cabeza"></thead><tbody id="cuerpo"></tbody></table></div>
+        <details id="detPasos" hidden>
+          <summary>Ver cálculos del rango, número de clases y amplitud</summary>
+          <ol class="pasos" id="pasos"></ol>
+        </details>
+      </div>
+
+      <div class="sheet preview" id="cajaVista" hidden>
+        <h2 class="label-sec">Imagen JPG</h2>
+        <p class="hint">Si la descarga no inicia, mantén presionada la imagen (celular) o da clic derecho (computadora) y elige “Guardar imagen”.</p>
+        <img id="vista" alt="Vista previa de la gráfica en formato JPG">
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const val = (name) => document.querySelector(`input[name="${name}"]:checked`).value;
+
+  const EJEMPLOS = {
+    ej1: { nombre: "Número de hermanos", datos: "1, 0, 2, 0, 1, 3, 2, 1, 1, 0, 2, 4, 1, 2, 3, 1, 0, 1, 2, 2, 1, 5, 1, 2, 0, 3, 1, 2, 1, 1, 2, 0, 3, 2, 1, 4, 1, 2, 2, 1", dist: "na" },
+    ej2: { nombre: "Estatura (m)", datos: "1.61, 1.67, 1.61, 1.60, 1.56, 1.61, 1.72, 1.66, 1.71, 1.65, 1.66, 1.64, 1.50, 1.70, 1.67, 1.67, 1.49, 1.49, 1.56, 1.59, 1.65, 1.63, 1.67, 1.58, 1.65, 1.66, 1.58, 1.77, 1.67, 1.73, 1.58, 1.57, 1.60, 1.62, 1.68, 1.65, 1.59, 1.55, 1.59, 1.73, 1.57, 1.65, 1.66, 1.51, 1.63, 1.73, 1.47, 1.60, 1.62, 1.56", dist: "ag" },
+    ej3: { nombre: "Medio de transporte", datos: "Metro, Camión, Metro, Caminando, Metrobús, Metro, Camión, Bicicleta, Metro, Auto, Camión, Metro, Metrobús, Caminando, Metro, Camión, Auto, Metro, Metrobús, Camión, Metro, Caminando, Camión, Metro, Bicicleta, Metro, Camión, Metrobús, Metro, Auto", dist: "na" }
+  };
+
+  // ======================= Lectura =======================
+  const decimalesDe = (txt) => { const p = String(txt).split("."); return p.length > 1 ? p[1].length : 0; };
+  function leerTexto(texto) {
+    const sep = /[\n,;]/.test(texto) ? /[\n,;]+/ : /\s+/;
+    return texto.split(sep).map(t => t.trim()).filter(t => t !== "");
+  }
+  function leerCSV(texto) {
+    const renglones = texto.replace(/^﻿/, "").split(/\r?\n/).filter(r => r.trim() !== "");
+    if (renglones.length < 2) throw new Error("El archivo necesita el nombre de la variable en A1 y al menos un dato debajo.");
+    const sep = renglones[0].includes(";") ? ";" : ",";
+    const celda = (r) => r.split(sep)[0].replace(/^"|"$/g, "").trim();
+    const nombre = celda(renglones[0]);
+    const datos = renglones.slice(1).map(r => { let c = celda(r); if (sep === ";" && /^-?\d+,\d+$/.test(c)) c = c.replace(",", "."); return c; })
+                                     .filter(c => c !== "");
+    return { nombre, datos };
+  }
+
+  // ======================= Cálculos =======================
+  // Datos no agrupados: una categoría por valor distinto
+  function calcNoAgrupados(textos) {
+    const n = textos.length;
+    if (n < 1) throw new Error("Escribe al menos un dato.");
+    const numerico = textos.every(t => Number.isFinite(Number(t)));
+    const conteo = new Map();
+    textos.forEach(t => { const k = numerico ? Number(t) : t; conteo.set(k, (conteo.get(k) || 0) + 1); });
+    const dec = numerico ? Math.max(...textos.map(decimalesDe)) : 0;
+    const claves = [...conteo.keys()].sort((a, b) => numerico ? a - b : String(a).localeCompare(String(b), "es", { numeric: true }));
+    let F = 0;
+    const cats = claves.map((x, j) => {
+      const f = conteo.get(x); F += f;
+      return { i: j + 1, x, etiqueta: numerico ? x.toFixed(dec) : x, f, fr: f / n * 100, F, Fr: F / n * 100 };
+    });
+    return { tipo: "na", n, numerico, dec, cats };
+  }
+
+  // Datos agrupados: mismo método que la herramienta de datos agrupados (enteros escalados)
+  function calcAgrupados(textos, modo, kTxt, aTxt) {
+    const malos = textos.filter(t => !Number.isFinite(Number(t)));
+    if (malos.length) throw new Error(`Para agrupar, todos los datos deben ser números. Revisa: ${malos.slice(0, 5).join(", ")}.`);
+    const n = textos.length;
+    if (n < 2) throw new Error("Se necesitan al menos 2 datos para agrupar.");
+    const dDatos = Math.max(...textos.map(decimalesDe));
+    let k, aTexto, d = dDatos;
+    if (modo === "propio") {
+      k = parseInt(kTxt, 10);
+      if (!Number.isInteger(k) || k < 1 || k > 50) throw new Error("Escribe un número de clases k entero entre 1 y 50.");
+      aTexto = String(aTxt).trim().replace(",", ".");
+      if (!(Number(aTexto) > 0)) throw new Error("Escribe una amplitud A mayor que 0.");
+      d = Math.max(dDatos, decimalesDe(aTexto));
+    }
+    const s = Math.pow(10, d);
+    const vals = textos.map(t => Math.round(Number(t) * s)).sort((a, b) => a - b);
+    const min = vals[0], max = vals[n - 1], R = max - min;
+    if (R === 0) throw new Error("Todos los datos son iguales (el rango es 0). Para agrupar se necesitan datos distintos.");
+    const kSturgesExacto = 1 + 3.322 * Math.log10(n);
+    const kSturges = Math.ceil(kSturgesExacto - 1e-9);
+    let A;
+    if (modo !== "propio") { k = kSturges; A = Math.max(1, Math.ceil(R / k - 1e-9)); }
+    else A = Math.round(Number(aTexto) * s);
+    const clases = [];
+    for (let i = 0; i < k; i++) clases.push({ i: i + 1, LI: min + i * A, LS: min + (i + 1) * A, f: 0 });
+    let fuera = 0;
+    vals.forEach(v => {
+      let idx = Math.floor((v - min) / A);
+      if (idx === k && v === clases[k - 1].LS) idx = k - 1;
+      if (idx >= 0 && idx < k) clases[idx].f++; else fuera++;
+    });
+    const F_ = (v) => (v / s).toFixed(d);
+    let F = 0;
+    clases.forEach((c, j) => {
+      F += c.f; c.fr = c.f / n * 100; c.F = F; c.Fr = F / n * 100;
+      const doble = c.LI + c.LS, decM = doble % 2 === 0 ? d : d + 1;
+      c.marca = doble / 2 / s; c.marcaTxt = c.marca.toFixed(decM);
+      c.li = c.LI / s; c.ls = c.LS / s;
+      c.etiqueta = `[${F_(c.LI)}, ${F_(c.LS)}${j === k - 1 ? "]" : ")"}`;
+    });
+    return { tipo: "ag", n, d, s, min, max, R, k, A, kSturges, kSturgesExacto, modo, clases, fuera, F_ };
+  }
+
+  // ======================= Escalas =======================
+  // Paso "bonito" para las marcas de un eje
+  function pasoBonito(maximo, objetivo, entero) {
+    if (maximo <= 0) return 1;
+    const crudo = maximo / objetivo, mag = Math.pow(10, Math.floor(Math.log10(crudo))), norm = crudo / mag;
+    let p = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+    if (entero) { p = Math.max(1, Math.round(p)); if (p === 2.5) p = 2; }
+    return p;
+  }
+  const fmtNum = (v) => { const r = Math.round(v * 1000) / 1000; return Number.isInteger(r) ? String(r) : String(r); };
+
+  // ======================= Colores =======================
+  const COL = {
+    barra: "#2a78d6", barraBorde: "#1c5cab", poligono: "#eb6834", ojiva: "#6250d6", punto: "#2a78d6",
+    tinta: "#1B2433", sec: "#52514e", malla: "#E4E9F1", eje: "#7A8599", fondo: "#FFFFFF",
+    sectores: ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"],
+    sans: '"Source Sans 3", "Segoe UI", Roboto, Arial, sans-serif',
+    serif: '"Source Serif 4", Georgia, "Times New Roman", serif'
+  };
+  // Más de 8 sectores: se alternan pasos claros y oscuros de dos tonos para que los vecinos se distingan
+  const EXTRA = ["#9ec5f4", "#256abf", "#f4a37f", "#b5431a", "#86d8b8", "#0f7a54", "#f7cf6a", "#9a6a00", "#c9b9f5", "#3e2fa0", "#f2a3a2", "#a52b2a"];
+  const colorSector = (j, k) => k <= 8 ? COL.sectores[j] : (j < 8 ? COL.sectores[j] : EXTRA[(j - 8) % EXTRA.length]);
+
+  // ======================= Dibujo =======================
+  // Construye la "escena": qué se dibuja según tipo de distribución y gráfica
+  function escena(res, opc) {
+    const ag = res.tipo === "ag";
+    const items = ag ? res.clases : res.cats;
+    let pos, ancho, xMin, xMax, ticksX;
+    if (ag) {
+      const A = res.A / res.s;
+      xMin = items[0].li - A; xMax = items[items.length - 1].ls + A;
+      pos = items.map(c => c.marca); ancho = A;
+      const usaLimites = opc.tipo === "barras" || opc.tipo === "combinada" || opc.tipo === "ojiva";
+      ticksX = usaLimites
+        ? [...items.map(c => ({ v: c.li, t: res.F_(c.LI) })), { v: items[items.length - 1].ls, t: res.F_(items[items.length - 1].LS) }]
+        : items.map(c => ({ v: c.marca, t: c.marcaTxt }));
+      if (!usaLimites && opc.cerrar && (opc.tipo === "poligono")) {
+        const pre = items[0].marca - A, post = items[items.length - 1].marca + A, dec = items[0].marcaTxt.split(".")[1]?.length || 0;
+        ticksX = [{ v: pre, t: pre.toFixed(dec) }, ...ticksX, { v: post, t: post.toFixed(dec) }];
+      }
+    } else if (res.numerico) {
+      pos = items.map(c => c.x);
+      let gap = Infinity;
+      for (let j = 1; j < pos.length; j++) gap = Math.min(gap, pos[j] - pos[j - 1]);
+      if (!Number.isFinite(gap)) gap = 1;
+      ancho = gap * 0.6;
+      xMin = pos[0] - gap; xMax = pos[pos.length - 1] + gap;
+      ticksX = items.map(c => ({ v: c.x, t: c.etiqueta }));
+      if (opc.cerrar && (opc.tipo === "poligono" || opc.tipo === "combinada")) {
+        ticksX = [{ v: pos[0] - gap, t: fmtNum(pos[0] - gap) }, ...ticksX, { v: pos[pos.length - 1] + gap, t: fmtNum(pos[pos.length - 1] + gap) }];
+      }
+      res._gap = gap;
+    } else {
+      pos = items.map((c, j) => j + 1); ancho = 0.6; xMin = 0.3; xMax = items.length + 0.7;
+      ticksX = items.map((c, j) => ({ v: j + 1, t: c.etiqueta }));
+      res._gap = 1;
+    }
+    return { ag, items, pos, ancho, xMin, xMax, ticksX };
+  }
+
+  function dibujarGrafica(ctx, W, H, res, opc, regiones) {
+    const base = Math.max(12, Math.min(16, W / 58));
+    const f = (w, tam, fam) => `${w} ${tam}px ${fam || COL.sans}`;
+    ctx.fillStyle = COL.fondo; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = "alphabetic";
+
+    // Título
+    const pad = Math.round(base * 1.1);
+    ctx.fillStyle = "#1F3864"; ctx.font = f(600, Math.round(base * 1.3), COL.serif); ctx.textAlign = "center";
+    const lineasT = partir(ctx, opc.titulo, W - pad * 2).slice(0, 2);
+    lineasT.forEach((t, j) => ctx.fillText(recortar(ctx, t, W - pad * 2), W / 2, pad + base * 1.1 + j * base * 1.55));
+    let yTop = pad + base * 1.1 + (lineasT.length - 1) * base * 1.55 + base * 1.2;
+    ctx.font = f(400, Math.round(base * 0.9)); ctx.fillStyle = COL.sec;
+    ctx.fillText(recortar(ctx, opc.subtitulo, W - pad * 2), W / 2, yTop + base * 0.4);
+    yTop += base * 1.6;
+
+    if (opc.tipo === "circular") return dibujarCircular(ctx, W, H, res, opc, regiones, yTop, base, f);
+
+    const sc = escena(res, opc);
+    const cum = opc.tipo === "ojiva";
+    const vAbs = (c) => cum ? c.F : c.f;
+    const maxAbs = cum ? res.n : Math.max(...sc.items.map(c => c.f));
+
+    // Ejes elegidos
+    let izq = opc.ejeIzq, der = opc.ejeDer;
+    if (opc.tipo === "puntos") { izq = "no"; der = "no"; }
+    else if (izq === "no" && der === "no") izq = "abs";
+    const primario = izq !== "no" ? izq : der;
+
+    // Escala vertical (en conteos) definida por el eje primario
+    let yMaxCont, ticksPrim;
+    const etiquetasValores = opc.valores && opc.tipo !== "puntos";
+    if (opc.tipo === "puntos") {
+      yMaxCont = maxAbs;
+    } else if (primario === "abs") {
+      const p = pasoBonito(maxAbs, 5, true);
+      let top = Math.ceil(maxAbs / p) * p; if (etiquetasValores && !cum && top < maxAbs * 1.1) top += p; if (top === 0) top = p;
+      yMaxCont = top; ticksPrim = [];
+      for (let v = 0; v <= top + 1e-9; v += p) ticksPrim.push(v);
+    } else {
+      const maxRel = maxAbs / res.n * 100;
+      const p = pasoBonito(maxRel, 5, false);
+      let top = Math.ceil(maxRel / p - 1e-9) * p; if (etiquetasValores && !cum && top < maxRel * 1.1) top += p;
+      yMaxCont = top / 100 * res.n; ticksPrim = [];
+      for (let v = 0; v <= top + 1e-9; v += p) ticksPrim.push(v);
+    }
+    const aUnidad = (u, cont) => u === "abs" ? cont : cont / res.n * 100;
+    const deUnidad = (u, v) => u === "abs" ? v : v / 100 * res.n;
+    const tickTxt = (u, v) => u === "abs" ? fmtNum(v) : (Math.abs(v - Math.round(v)) < 1e-6 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toFixed(1));
+    function ticksDe(u) {
+      if (u === primario) return ticksPrim;
+      // Si las líneas de la malla corresponden a valores "limpios" en la otra unidad, se usan las mismas alturas
+      const alineados = ticksPrim.map(v => aUnidad(u, deUnidad(primario, v)));
+      const limpio = alineados.every(v => u === "abs" ? Math.abs(v - Math.round(v)) < 1e-9 : Math.abs(v * 10 - Math.round(v * 10)) < 1e-6);
+      if (limpio) return alineados;
+      const maxU = aUnidad(u, yMaxCont);
+      const p = pasoBonito(maxU, 5, u === "abs");
+      const t = []; for (let v = 0; v <= maxU + 1e-9; v += p) t.push(v);
+      return t;
+    }
+    const nombreEje = (u) => cum
+      ? (u === "abs" ? "Frecuencia acumulada (F)" : "Frecuencia relativa acumulada (Fr %)")
+      : (u === "abs" ? "Frecuencia absoluta (f)" : "Frecuencia relativa (fr %)");
+
+    // Márgenes
+    ctx.font = f(400, base * 0.9);
+    const anchoTicks = (u) => u === "no" ? 0 : Math.max(...ticksDe(u).map(v => ctx.measureText(tickTxt(u, v)).width));
+    const mIzq = izq === "no" ? pad * 1.4 : anchoTicks(izq) + base * 2.6 + 10;
+    const mDer = der === "no" ? pad * 1.4 : anchoTicks(der) + base * 2.6 + 10;
+
+    // Etiquetas del eje x: ¿caben horizontales?
+    const x0 = mIzq, x1 = W - mDer;
+    const X = (v) => x0 + (v - sc.xMin) / (sc.xMax - sc.xMin) * (x1 - x0);
+    ctx.font = f(400, base * 0.88);
+    const anchos = sc.ticksX.map(t => ctx.measureText(t.t).width);
+    let minSep = Infinity;
+    for (let j = 1; j < sc.ticksX.length; j++) minSep = Math.min(minSep, X(sc.ticksX[j].v) - X(sc.ticksX[j - 1].v));
+    const maxAncho = Math.max(...anchos);
+    let rotar = false, salto = 1;
+    if (maxAncho + 6 > minSep) {
+      rotar = true;
+      const altoTxt = base * 0.88 * 1.25;
+      if (altoTxt > minSep) salto = Math.ceil(altoTxt / minSep);
+    }
+    const altoEtiq = rotar ? Math.min(maxAncho, W * 0.25) * 0.72 + base : base * 1.2;
+    const mInf = altoEtiq + base * 2.6 + 10;
+    const y0 = H - mInf, y1 = yTop + base * (opc.tipo === "ojiva" && opc.valores ? 1.6 : 0.8);
+    const Y = (cont) => y0 - cont / yMaxCont * (y0 - y1);
+
+    // Malla y ejes verticales
+    if (opc.tipo !== "puntos") {
+      ctx.strokeStyle = COL.malla; ctx.lineWidth = 1;
+      ticksDe(primario).forEach(v => { const y = Math.round(Y(deUnidad(primario, v))) + 0.5; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); });
+      [["izq", izq], ["der", der]].forEach(([lado, u]) => {
+        if (u === "no") return;
+        const xe = lado === "izq" ? x0 : x1;
+        ctx.strokeStyle = COL.eje; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(xe, y0); ctx.lineTo(xe, y1 - 4); ctx.stroke();
+        ctx.fillStyle = COL.sec; ctx.font = f(400, base * 0.9); ctx.textBaseline = "middle";
+        ctx.textAlign = lado === "izq" ? "right" : "left";
+        ticksDe(u).forEach(v => {
+          const y = Y(deUnidad(u, v));
+          ctx.beginPath(); ctx.moveTo(xe, y); ctx.lineTo(xe + (lado === "izq" ? -5 : 5), y); ctx.stroke();
+          ctx.fillText(tickTxt(u, v), xe + (lado === "izq" ? -8 : 8), y);
+        });
+        // Título del eje (rotado)
+        ctx.save(); ctx.fillStyle = COL.tinta; ctx.font = f(600, base * 0.92); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        const xt = lado === "izq" ? base * 0.9 : W - base * 0.9;
+        ctx.translate(xt, (y0 + y1) / 2); ctx.rotate(lado === "izq" ? -Math.PI / 2 : Math.PI / 2);
+        let nom = nombreEje(u);
+        if (ctx.measureText(nom).width > y0 - y1) nom = cum ? (u === "abs" ? "Frec. acumulada (F)" : "Frec. rel. acumulada (Fr %)") : (u === "abs" ? "Frec. absoluta (f)" : "Frec. relativa (fr %)");
+        ctx.fillText(recortar(ctx, nom, y0 - y1), 0, 0); ctx.restore();
+        ctx.textBaseline = "alphabetic";
+      });
+    }
+
+    // Eje horizontal
+    ctx.strokeStyle = COL.eje; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x0, y0 + 0.5); ctx.lineTo(x1, y0 + 0.5); ctx.stroke();
+    ctx.fillStyle = COL.sec; ctx.font = f(400, base * 0.88);
+    sc.ticksX.forEach((t, j) => {
+      const x = X(t.v);
+      ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 + 5); ctx.stroke();
+      if (j % salto !== 0) return;
+      if (rotar) {
+        ctx.save(); ctx.translate(x, y0 + 9); ctx.rotate(-Math.PI / 4); ctx.textAlign = "right"; ctx.textBaseline = "middle";
+        ctx.fillText(recortar(ctx, t.t, W * 0.25), 0, 0); ctx.restore();
+      } else { ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(t.t, x, y0 + 8); }
+    });
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = COL.tinta; ctx.font = f(600, base * 0.95); ctx.textAlign = "center";
+    ctx.fillText(recortar(ctx, opc.ejeX, x1 - x0), (x0 + x1) / 2, H - base * 0.9);
+
+    const unidadValor = primario;
+    const txtValor = (c) => unidadValor === "abs" ? String(vAbs(c)) : (cum ? c.Fr : c.fr).toFixed(1) + "%";
+    const tipHtml = (c) => {
+      const nom = sc.ag ? c.etiqueta + "  (x = " + c.marcaTxt + ")" : c.etiqueta;
+      return cum ? `<b>${nom}</b><br>F = ${c.F} &nbsp;·&nbsp; Fr = ${c.Fr.toFixed(2)}%` : `<b>${nom}</b><br>f = ${c.f} &nbsp;·&nbsp; fr = ${c.fr.toFixed(2)}%`;
+    };
+    ctx.font = f(600, base * 0.85);
+
+    // --- Barras / histograma
+    if (opc.tipo === "barras" || opc.tipo === "combinada") {
+      sc.items.forEach((c, j) => {
+        let xa, xb;
+        if (sc.ag) { xa = X(c.li); xb = X(c.ls); } else { xa = X(sc.pos[j] - sc.ancho / 2); xb = X(sc.pos[j] + sc.ancho / 2); }
+        const yb = Y(c.f), h = y0 - yb;
+        ctx.fillStyle = COL.barra; ctx.globalAlpha = opc.tipo === "combinada" ? 0.75 : 1;
+        ctx.fillRect(xa, yb, xb - xa, h); ctx.globalAlpha = 1;
+        if (sc.ag) { ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.strokeRect(xa, yb, xb - xa, h); }
+        regiones.push({ t: "r", x: xa, y: yb, w: xb - xa, h: Math.max(h, 6), html: tipHtml(c) });
+        if (opc.valores && c.f > 0) { ctx.fillStyle = COL.tinta; ctx.textAlign = "center"; ctx.fillText(txtValor(c), (xa + xb) / 2, yb - (opc.tipo === "combinada" ? base * 0.75 : 5)); }
+      });
+    }
+
+    // --- Polígono
+    if (opc.tipo === "poligono" || opc.tipo === "combinada") {
+      const pts = sc.items.map((c, j) => ({ x: X(sc.pos[j]), y: Y(c.f), c }));
+      const paso = sc.ag ? res.A / res.s : res._gap;
+      const cerrar = sc.ag ? opc.cerrar || opc.tipo === "combinada" : opc.cerrar;
+      const linea = cerrar ? [{ x: X(sc.pos[0] - paso), y: y0 }, ...pts, { x: X(sc.pos[sc.pos.length - 1] + paso), y: y0 }] : pts;
+      trazo(ctx, linea, COL.poligono, base);
+      pts.forEach(p => { punto(ctx, p.x, p.y, base * 0.36, COL.poligono); regiones.push({ t: "c", x: p.x, y: p.y, r: base, html: tipHtml(p.c) }); });
+      if (cerrar) { punto(ctx, linea[0].x, y0, base * 0.3, COL.poligono); punto(ctx, linea[linea.length - 1].x, y0, base * 0.3, COL.poligono); }
+      if (opc.valores && opc.tipo === "poligono") { ctx.fillStyle = COL.tinta; ctx.textAlign = "center"; ctx.font = f(600, base * 0.85); pts.forEach(p => ctx.fillText(txtValor(p.c), p.x, p.y - base * 0.75)); }
+    }
+
+    // --- Ojiva
+    if (opc.tipo === "ojiva") {
+      let pts;
+      if (sc.ag) pts = [{ x: X(sc.items[0].li), y: y0, c: null }, ...sc.items.map(c => ({ x: X(c.ls), y: Y(c.F), c }))];
+      else pts = sc.items.map((c, j) => ({ x: X(sc.pos[j]), y: Y(c.F), c }));
+      trazo(ctx, pts, COL.ojiva, base);
+      pts.forEach(p => {
+        punto(ctx, p.x, p.y, base * 0.36, COL.ojiva);
+        if (p.c) regiones.push({ t: "c", x: p.x, y: p.y, r: base, html: tipHtml(p.c) });
+        if (opc.valores && p.c) { ctx.fillStyle = COL.tinta; ctx.textAlign = "right"; ctx.font = f(600, base * 0.85); ctx.fillText(txtValor(p.c), p.x - base * 0.45, p.y - base * 0.45); }
+      });
+    }
+
+    // --- Gráfica de puntos
+    let nota = "";
+    if (opc.tipo === "puntos") {
+      const maxF = Math.max(...sc.items.map(c => c.f));
+      const opciones = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500, 1000];
+      let m = opciones.find(o => Math.ceil(maxF / o) <= 30) || 1000;
+      const altoDisp = y0 - y1;
+      const sepX = sc.items.length > 1 ? Math.abs(X(sc.pos[1]) - X(sc.pos[0])) : (x1 - x0) / 3;
+      const pila = Math.ceil(maxF / m);
+      const r = Math.max(2, Math.min(base * 0.55, sepX * 0.38, altoDisp / pila / 2.3));
+      sc.items.forEach((c, j) => {
+        const cuantos = Math.round(c.f / m) || (c.f > 0 ? 1 : 0);
+        const x = X(sc.pos[j]);
+        for (let q = 0; q < cuantos; q++) punto(ctx, x, y0 - r * 1.25 - q * r * 2.2, r, COL.punto, true);
+        regiones.push({ t: "r", x: x - r * 1.5, y: y0 - cuantos * r * 2.2 - r, w: r * 3, h: cuantos * r * 2.2 + r, html: tipHtml(c) });
+        if (opc.valores && c.f > 0) { ctx.fillStyle = COL.tinta; ctx.textAlign = "center"; ctx.font = f(600, base * 0.85); ctx.fillText(String(c.f), x, y0 - cuantos * r * 2.2 - r * 0.6); }
+      });
+      if (m > 1) nota = `Cada punto representa ${m} datos.`;
+    }
+
+    // Leyenda para la combinada
+    if (opc.tipo === "combinada") {
+      ctx.font = f(400, base * 0.85); ctx.textBaseline = "middle";
+      const etqA = sc.ag ? "Histograma" : "Barras", etqB = "Polígono de frecuencias";
+      const wA = ctx.measureText(etqA).width, wB = ctx.measureText(etqB).width;
+      let lx = x1 - (wA + wB + base * 5), ly = y1 + base * 0.2;
+      ctx.fillStyle = COL.barra; ctx.globalAlpha = 0.75; ctx.fillRect(lx, ly - base * 0.4, base * 0.9, base * 0.8); ctx.globalAlpha = 1;
+      ctx.fillStyle = COL.tinta; ctx.textAlign = "left"; ctx.fillText(etqA, lx + base * 1.2, ly);
+      lx += wA + base * 2.2;
+      ctx.strokeStyle = COL.poligono; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + base * 1.2, ly); ctx.stroke();
+      punto(ctx, lx + base * 0.6, ly, base * 0.28, COL.poligono);
+      ctx.fillStyle = COL.tinta; ctx.fillText(etqB, lx + base * 1.6, ly);
+      ctx.textBaseline = "alphabetic";
+    }
+    return nota;
+  }
+
+  function dibujarCircular(ctx, W, H, res, opc, regiones, yTop, base, f) {
+    const ag = res.tipo === "ag";
+    const items = (ag ? res.clases : res.cats);
+    const total = res.n;
+    const angosto = W < 620;
+    ctx.font = f(400, base * 0.88);
+    const etiquetas = items.map(c => `${c.etiqueta}:  f = ${c.f}  (${c.fr.toFixed(1)}%)`);
+    const anchoLey = Math.max(...etiquetas.map(t => ctx.measureText(t).width)) + base * 1.8;
+    const lineaLey = base * 1.45;
+    let cx, cy, rad, lx, ly, cols = 1;
+    if (angosto) {
+      cols = W > 2 * anchoLey + 30 ? 2 : 1;
+      const filas = Math.ceil(items.length / cols);
+      const altoLey = filas * lineaLey + base;
+      rad = Math.max(40, Math.min(W * 0.36, (H - yTop - altoLey - base * 2) / 2));
+      cx = W / 2; cy = yTop + base + rad;
+      lx = cols === 2 ? (W - 2 * anchoLey) / 2 : Math.max(base, (W - anchoLey) / 2); ly = cy + rad + base * 1.6;
+    } else {
+      rad = Math.min((H - yTop - base * 2) / 2, (W - anchoLey - base * 6) / 2);
+      const bloque = rad * 2 + base * 3 + anchoLey;
+      cx = (W - bloque) / 2 + rad; cy = yTop + base * 0.6 + rad;
+      lx = cx + rad + base * 3; ly = cy - (items.length * lineaLey) / 2 + lineaLey / 2;
+    }
+    let a = -Math.PI / 2;
+    items.forEach((c, j) => {
+      if (c.f === 0) return;
+      const da = c.f / total * Math.PI * 2;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, rad, a, a + da); ctx.closePath();
+      ctx.fillStyle = colorSector(j, items.length); ctx.fill();
+      ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 2; ctx.stroke();
+      regiones.push({ t: "s", x: cx, y: cy, r: rad, a0: a, a1: a + da, html: `<b>${c.etiqueta}</b><br>f = ${c.f} &nbsp;·&nbsp; ${c.fr.toFixed(2)}% &nbsp;·&nbsp; ${(c.fr * 3.6).toFixed(1)}°` });
+      if (opc.valores && da > 0.3) {
+        const am = a + da / 2, rr = rad * 0.66;
+        ctx.font = f(700, base * 0.9); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        const t = c.fr.toFixed(1) + "%";
+        const tx = cx + Math.cos(am) * rr, ty = cy + Math.sin(am) * rr;
+        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.strokeText(t, tx, ty);
+        ctx.fillStyle = "#FFFFFF"; ctx.fillText(t, tx, ty);
+      }
+      a += da;
+    });
+    // Leyenda (siempre: identifica cada sector con su valor)
+    ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    items.forEach((c, j) => {
+      const col = angosto && cols === 2 ? j % 2 : 0, fila = angosto && cols === 2 ? Math.floor(j / 2) : j;
+      const x = lx + col * anchoLey, y = ly + fila * lineaLey;
+      ctx.fillStyle = colorSector(j, items.length); ctx.fillRect(x, y - base * 0.42, base * 0.85, base * 0.85);
+      ctx.fillStyle = COL.tinta; ctx.font = f(400, base * 0.88);
+      ctx.fillText(etiquetas[j], x + base * 1.25, y);
+    });
+    ctx.textBaseline = "alphabetic";
+    return "";
+  }
+
+  function trazo(ctx, pts, color, base) {
+    ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, base * 0.16); ctx.lineJoin = "round";
+    ctx.beginPath(); pts.forEach((p, j) => j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke();
+  }
+  function punto(ctx, x, y, r, color, sinAnillo) {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill();
+    if (!sinAnillo) { ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.5; ctx.stroke(); }
+  }
+  function partir(ctx, texto, ancho) {
+    const palabras = texto.split(/\s+/); const lineas = []; let act = "";
+    palabras.forEach(w => { const prueba = act ? act + " " + w : w; if (ctx.measureText(prueba).width > ancho && act) { lineas.push(act); act = w; } else act = prueba; });
+    if (act) lineas.push(act);
+    if (lineas.length > 2) lineas[1] = lineas.slice(1).join(" ");
+    return lineas;
+  }
+  function recortar(ctx, t, ancho) {
+    if (ctx.measureText(t).width <= ancho) return t;
+    let s = t; while (s.length > 1 && ctx.measureText(s + "…").width > ancho) s = s.slice(0, -1);
+    return s + "…";
+  }
+
+  // ======================= Tabla y pasos =======================
+  function pintarTabla(res, nombre) {
+    const ag = res.tipo === "ag";
+    const d2 = (v) => v.toFixed(2);
+    const s = (b, sub, extra = "") => `<span class="sym">${b}<sub>${sub}</sub></span>${extra}`;
+    $("cabeza").innerHTML = ag
+      ? `<tr><th>${s("i", "")}</th><th>Intervalo</th><th>${s("x", "i")}</th><th>${s("f", "i")}</th><th>${s("fr", "i", " %")}</th><th>${s("F", "i")}</th><th>${s("Fr", "i", " %")}</th></tr>`
+      : `<tr><th>${s("i", "")}</th><th>${s("x", "i")}</th><th>${s("f", "i")}</th><th>${s("fr", "i", " %")}</th><th>${s("F", "i")}</th><th>${s("Fr", "i", " %")}</th></tr>`;
+    const filas = (ag ? res.clases : res.cats).map(c => ag
+      ? `<tr><td>${c.i}</td><td>${c.etiqueta}</td><td>${c.marcaTxt}</td><td>${c.f}</td><td>${d2(c.fr)}</td><td>${c.F}</td><td>${d2(c.Fr)}</td></tr>`
+      : `<tr><td>${c.i}</td><td>${escapar(String(c.etiqueta))}</td><td>${c.f}</td><td>${d2(c.fr)}</td><td>${c.F}</td><td>${d2(c.Fr)}</td></tr>`);
+    const suma = (ag ? res.clases : res.cats).reduce((a, c) => a + c.f, 0);
+    filas.push(ag ? `<tr class="total"><td></td><td colspan="2">Total</td><td>${suma}</td><td>${d2(suma / res.n * 100)}</td><td></td><td></td></tr>`
+                  : `<tr class="total"><td></td><td>Total</td><td>${suma}</td><td>${d2(suma / res.n * 100)}</td><td></td><td></td></tr>`);
+    $("cuerpo").innerHTML = filas.join("");
+    $("tituloTabla").textContent = "Tabla de distribución de frecuencias: " + nombre;
+    if (ag) {
+      const F = res.F_;
+      const ultLS = res.clases[res.k - 1].LS;
+      $("pasos").innerHTML = [
+        `Rango: <i>R</i> = ${F(res.max)} − ${F(res.min)} = <b>${F(res.R)}</b>`,
+        res.modo === "propio" ? `Número de clases (elegido): <b><i>k</i> = ${res.k}</b>. Con Sturges sería ${res.kSturges}.`
+          : `Sturges: <i>k</i> = 1 + 3.322 log(${res.n}) = ${res.kSturgesExacto.toFixed(2)} → <b><i>k</i> = ${res.k}</b>`,
+        res.modo === "propio" ? `Amplitud (elegida): <b><i>A</i> = ${F(res.A)}</b>`
+          : `Amplitud: <i>A</i> = ${F(res.R)} / ${res.k} = ${(res.R / res.s / res.k).toFixed(res.d + 3)} → <b><i>A</i> = ${F(res.A)}</b> (hacia arriba, con ${res.d} ${res.d === 1 ? "decimal" : "decimales"})`,
+        `Límites: <i>LI</i><sub>1</sub> = ${F(res.min)} y se suma <i>A</i> en cada clase. Último <i>LS</i> = ${F(ultLS)}${ultLS >= res.max ? "" : ` (<b>no</b> alcanza al dato mayor, ${F(res.max)})`}.`
+      ].map(t => `<li>${t}</li>`).join("");
+    }
+    $("detPasos").hidden = !ag;
+  }
+  const escapar = (t) => t.replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+
+  // ======================= Flujo =======================
+  const NOMBRES = { puntos: "Gráfica de puntos", circular: "Gráfica circular", barras: "Gráfica de barras", poligono: "Polígono de frecuencias", combinada: "Gráfica de barras y polígono de frecuencias", ojiva: "Ojiva" };
+  let estado = null, regiones = [];
+
+  function mensaje(t) { const m = $("mensaje"); m.textContent = t || ""; m.hidden = !t; }
+
+  function opciones(res, nombre) {
+    const tipo = val("tipo");
+    let nomTipo = NOMBRES[tipo];
+    if (res.tipo === "ag" && tipo === "barras") nomTipo = "Histograma";
+    if (res.tipo === "ag" && tipo === "combinada") nomTipo = "Histograma y polígono de frecuencias";
+    const sub = res.tipo === "ag"
+      ? `${nombre}  ·  n = ${res.n}  ·  k = ${res.k}  ·  A = ${res.F_(res.A)}`
+      : `${nombre}  ·  n = ${res.n}`;
+    return {
+      tipo, titulo: $("titulo").value.trim() || `${nomTipo}: ${nombre}`, subtitulo: sub,
+      ejeX: $("ejeX").value.trim() || nombre, ejeIzq: $("ejeIzq").value, ejeDer: $("ejeDer").value,
+      cerrar: $("cerrar").checked, valores: $("valores").checked
+    };
+  }
+
+  function actualizarControles(res) {
+    const ag = val("dist") === "ag";
+    $("opcAgrupados").hidden = !ag;
+    $("camposPropios").hidden = !(ag && val("modo") === "propio");
+    $("nomBarras").textContent = ag ? "Histograma" : "Barras";
+    $("nomCombinada").textContent = ag ? "Histograma + polígono" : "Barras + polígono";
+    const cualitativa = res && res.tipo === "na" && !res.numerico;
+    ["poligono", "combinada", "ojiva"].forEach(v => {
+      const el = document.querySelector(`input[name="tipo"][value="${v}"]`);
+      el.disabled = !!cualitativa;
+    });
+    if (cualitativa && ["poligono", "combinada", "ojiva"].includes(val("tipo"))) document.querySelector('input[name="tipo"][value="barras"]').checked = true;
+    $("avisoCualitativa").hidden = !cualitativa;
+    const tipo = val("tipo");
+    $("opcEjes").hidden = tipo === "puntos" || tipo === "circular";
+    $("hintEjes").hidden = tipo !== "ojiva";
+    $("filaCerrar").hidden = !(tipo === "poligono" || (tipo === "combinada" && !ag));
+  }
+
+  function construir() {
+    mensaje("");
+    const nombre = $("variable").value.trim() || "Variable";
+    const textos = leerTexto($("datos").value);
+    let res;
+    try {
+      res = val("dist") === "ag"
+        ? calcAgrupados(textos, val("modo"), $("kPropio").value, $("aPropio").value)
+        : calcNoAgrupados(textos);
+    } catch (e) { mensaje(e.message); actualizarControles(null); return; }
+    if (res.tipo === "ag") {
+      if (res.modo !== "propio") { $("kPropio").value = res.k; $("aPropio").value = res.F_(res.A); }
+      if (res.fuera > 0) mensaje(`Con k = ${res.k} y A = ${res.F_(res.A)}, ${res.fuera} ${res.fuera === 1 ? "dato queda" : "datos quedan"} fuera de los intervalos. Aumenta k o A.`);
+    } else if (res.numerico && res.cats.length > 25) {
+      mensaje(`Hay ${res.cats.length} valores distintos. Con tantos valores conviene usar datos agrupados.`);
+    }
+    actualizarControles(res);
+    estado = { res, nombre };
+    pintarTabla(res, nombre);
+    pintar();
+  }
+
+  function pintar() {
+    if (!estado) return;
+    const cv = $("cv"), caja = $("lienzo");
+    const W = Math.max(300, Math.round(caja.clientWidth));
+    const opc = opciones(estado.res, estado.nombre);
+    let H = W < 600 ? Math.round(W * 1.0) : Math.round(W * 0.62);
+    if (opc.tipo === "circular" && W < 620) {
+      const k = (estado.res.tipo === "ag" ? estado.res.clases : estado.res.cats).length;
+      H = Math.round(W * 0.95 + k * 22);
+    }
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    regiones = [];
+    const nota = dibujarGrafica(ctx, W, H, estado.res, opc, regiones);
+    cv.setAttribute("aria-label", opc.titulo);
+    $("resumen").textContent = nota || (opc.tipo === "circular" ? "Toca o pasa el cursor sobre un sector para ver su frecuencia y su ángulo." : "Toca o pasa el cursor sobre la gráfica para ver las frecuencias.");
+    $("tip").hidden = true;
+  }
+
+  function exportar() {
+    if (!estado) return null;
+    const opc = opciones(estado.res, estado.nombre);
+    const W = 1000;
+    let H = opc.tipo === "circular" ? Math.max(560, 150 + (estado.res.tipo === "ag" ? estado.res.clases : estado.res.cats).length * 23) : 620;
+    const esc = 2.5, cv = document.createElement("canvas");
+    cv.width = W * esc; cv.height = H * esc;
+    const ctx = cv.getContext("2d"); ctx.scale(esc, esc);
+    const nota = dibujarGrafica(ctx, W, H, estado.res, opc, []);
+    if (nota) { ctx.fillStyle = COL.sec; ctx.font = `italic 400 13px ${COL.sans}`; ctx.textAlign = "right"; ctx.fillText(nota, W - 16, 24); }
+    return { cv, opc };
+  }
+
+  // Tooltip
+  function enRegion(px, py) {
+    for (let j = regiones.length - 1; j >= 0; j--) {
+      const g = regiones[j];
+      if (g.t === "r" && px >= g.x && px <= g.x + g.w && py >= g.y - 6 && py <= g.y + g.h) return g;
+      if (g.t === "c" && Math.hypot(px - g.x, py - g.y) <= g.r) return g;
+      if (g.t === "s") {
+        const dx = px - g.x, dy = py - g.y;
+        if (Math.hypot(dx, dy) > g.r) continue;
+        let ang = Math.atan2(dy, dx); while (ang < g.a0) ang += Math.PI * 2;
+        if (ang <= g.a1) return g;
+      }
+    }
+    return null;
+  }
+  function mostrarTip(ev) {
+    const cv = $("cv"), rect = cv.getBoundingClientRect();
+    const px = ev.clientX - rect.left, py = ev.clientY - rect.top;
+    const g = enRegion(px, py), tip = $("tip");
+    if (!g) { tip.hidden = true; return; }
+    tip.innerHTML = g.html; tip.hidden = false;
+    const w = tip.offsetWidth, W = rect.width;
+    tip.style.left = Math.min(Math.max(px, w / 2 + 4), W - w / 2 - 4) + "px";
+    tip.style.top = Math.max(py, tip.offsetHeight + 14) + "px";
+  }
+  $("cv").addEventListener("pointermove", mostrarTip);
+  $("cv").addEventListener("pointerdown", mostrarTip);
+  $("cv").addEventListener("pointerleave", () => { $("tip").hidden = true; });
+
+  // Eventos
+  $("graficar").addEventListener("click", () => {
+    construir();
+    if (window.innerWidth < 880) $("lienzo").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  document.querySelectorAll('input[name="dist"], input[name="modo"]').forEach(el => el.addEventListener("change", () => {
+    actualizarControles(null);
+    if (!(val("dist") === "ag" && val("modo") === "propio")) construir();
+  }));
+  document.querySelectorAll('input[name="tipo"]').forEach(el => el.addEventListener("change", () => {
+    if (val("tipo") === "poligono") $("cerrar").checked = val("dist") === "ag";
+    actualizarControles(estado && estado.res); pintar();
+  }));
+  ["ejeIzq", "ejeDer", "cerrar", "valores"].forEach(id => $(id).addEventListener("change", pintar));
+  ["titulo", "ejeX"].forEach(id => $(id).addEventListener("input", pintar));
+  ["kPropio", "aPropio"].forEach(id => $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") construir(); }));
+  Object.keys(EJEMPLOS).forEach(id => $(id).addEventListener("click", () => {
+    const e = EJEMPLOS[id];
+    $("variable").value = e.nombre; $("datos").value = e.datos;
+    document.querySelector(`input[name="dist"][value="${e.dist}"]`).checked = true;
+    document.querySelector('input[name="modo"][value="sturges"]').checked = true;
+    $("nombreArchivo").textContent = "La celda A1 es el nombre de la variable y los datos van debajo, uno por celda.";
+    construir();
+  }));
+
+  $("archivo").addEventListener("change", (ev) => {
+    const archivo = ev.target.files[0];
+    if (!archivo) return;
+    if (!/\.(csv|txt)$/i.test(archivo.name)) { mensaje("Ese archivo no es CSV. Guarda tu hoja de cálculo como CSV y vuelve a subirla."); return; }
+    $("nombreArchivo").textContent = "Archivo: " + archivo.name;
+    const lector = new FileReader();
+    lector.onload = () => {
+      const texto = lector.result;
+      if (texto.includes(String.fromCharCode(0xFFFD))) { const l2 = new FileReader(); l2.onload = () => usarCSV(l2.result); l2.readAsText(archivo, "ISO-8859-1"); }
+      else usarCSV(texto);
+    };
+    lector.readAsText(archivo, "UTF-8");
+    ev.target.value = "";
+  });
+  function usarCSV(texto) {
+    try {
+      const { nombre, datos } = leerCSV(texto);
+      $("variable").value = nombre; $("datos").value = datos.join(", ");
+      document.querySelector('input[name="modo"][value="sturges"]').checked = true;
+      construir();
+    } catch (e) { mensaje(e.message); }
+  }
+
+  $("descargar").addEventListener("click", () => {
+    const r = exportar(); if (!r) return;
+    const url = r.cv.toDataURL("image/jpeg", 0.95);
+    $("vista").src = url; $("cajaVista").hidden = false;
+    const nombre = "grafica_" + r.opc.tipo + ".jpg";
+    r.cv.toBlob((blob) => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = nombre;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }, "image/jpeg", 0.95);
+  });
+
+  let espera; window.addEventListener("resize", () => { clearTimeout(espera); espera = setTimeout(pintar, 150); });
+
+  // Inicio
+  $("variable").value = EJEMPLOS.ej1.nombre; $("datos").value = EJEMPLOS.ej1.datos;
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(construir, construir);
+  construir();
+})();
+</script>
+</body>
+</html>
